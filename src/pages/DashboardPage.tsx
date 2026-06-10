@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react';
-import { getExpenses, getExpenseSummary, deleteExpense } from '../api/expenses';
+import { useState } from 'react';
 import { getCategoryColor, getCategoryEmoji } from '../utils/categories';
 import { formatAmount, formatDate, formatMonthYear } from '../utils/format';
 import { btnCls, cn } from '../utils/cn';
-import type { Expense, ExpenseSummary } from '../types';
+import { useSummary, useRecentExpenses, useDeleteExpense } from '../hooks/useExpenses';
+import type { Expense } from '../types';
 
 interface DashboardPageProps {
   onEdit: (expense: Expense) => void;
   onNavigateToExpenses: () => void;
-  refreshKey: number;
 }
 
 const PERIODS = [
@@ -24,43 +23,22 @@ const Spinner = () => (
   </div>
 );
 
-export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: DashboardPageProps) {
+export function DashboardPage({ onEdit, onNavigateToExpenses }: DashboardPageProps) {
   const [period, setPeriod] = useState('month');
-  const [summary, setSummary] = useState<ExpenseSummary | null>(null);
-  const [recent, setRecent] = useState<Expense[]>([]);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [recentLoading, setRecentLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setSummaryLoading(true);
-    setError('');
-    getExpenseSummary({ period })
-      .then(setSummary)
-      .catch((e) => setError(e.message))
-      .finally(() => setSummaryLoading(false));
-  }, [period, refreshKey]);
+  const { data: summary, isLoading: summaryLoading, error: summaryError } = useSummary(period);
+  const { data: recent = [], isLoading: recentLoading, error: recentError } = useRecentExpenses();
+  const deleteMutation = useDeleteExpense();
 
-  useEffect(() => {
-    setRecentLoading(true);
-    getExpenses({ limit: 8 })
-      .then((res) => setRecent(res.expenses))
-      .catch((e) => setError(e.message))
-      .finally(() => setRecentLoading(false));
-  }, [refreshKey]);
+  const error =
+    (summaryError as Error)?.message ||
+    (recentError as Error)?.message ||
+    (deleteMutation.error as Error)?.message ||
+    '';
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!confirm('Delete this expense?')) return;
-    setDeletingId(id);
-    try {
-      await deleteExpense(id);
-      setRecent((prev) => prev.filter((e) => e.id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete');
-    } finally {
-      setDeletingId(null);
-    }
+    deleteMutation.mutate(id);
   };
 
   const categories = summary
@@ -74,9 +52,9 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
   const periodLabel = summary ? (period === 'day' ? 'Today' : formatMonthYear(summary.date_from)) : '';
 
   const stats = [
-    { label: 'Total Spent',    value: summary ? formatAmount(summary.total_amount) : '$0.00', sub: PERIODS.find(p => p.value === period)?.label ?? period },
-    { label: 'Transactions',   value: String(summary?.count ?? 0),                            sub: 'expenses recorded' },
-    { label: 'Daily Average',  value: formatAmount(dailyAvg),                                 sub: 'per day' },
+    { label: 'Total Spent',   value: summary ? formatAmount(summary.total_amount) : 'IDR 0', sub: PERIODS.find(p => p.value === period)?.label ?? period },
+    { label: 'Transactions',  value: String(summary?.count ?? 0),                             sub: 'expenses recorded' },
+    { label: 'Daily Average', value: formatAmount(dailyAvg),                                  sub: 'per day' },
   ];
 
   return (
@@ -89,7 +67,6 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
             {summary && <p className="text-[13px] text-tx-muted mt-0.5">{periodLabel}</p>}
           </div>
         </div>
-        {/* Period tabs in their own scrollable row — never overflows viewport */}
         <div className="overflow-x-auto scrollbar-hide">
           <div className="inline-flex gap-[3px] bg-surface border border-border p-[3px] rounded-lg">
             {PERIODS.map((p) => (
@@ -190,7 +167,6 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
                     {getCategoryEmoji(expense.category)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    {/* description + amount on same row */}
                     <div className="flex items-start gap-2">
                       <span className="flex-1 text-[13.5px] font-medium text-tx-heading capitalize">
                         {expense.description || expense.category}
@@ -199,7 +175,6 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
                         {formatAmount(expense.amount)}
                       </span>
                     </div>
-                    {/* date · category · actions */}
                     <div className="flex items-center gap-[5px] mt-1 text-[12px] text-tx-muted flex-wrap">
                       <span className="whitespace-nowrap">{formatDate(expense.expense_date)}</span>
                       <span className="opacity-40">·</span>
@@ -209,8 +184,14 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
                       </span>
                       <div className="flex gap-0.5 ml-auto -my-1">
                         <button className={btnCls('ghost', 'icon')} onClick={() => onEdit(expense)} title="Edit">✏️</button>
-                        <button className={btnCls('ghost', 'icon')} onClick={() => handleDelete(expense.id)}
-                          disabled={deletingId === expense.id} title="Delete">🗑️</button>
+                        <button
+                          className={btnCls('ghost', 'icon')}
+                          onClick={() => handleDelete(expense.id)}
+                          disabled={deleteMutation.isPending && deleteMutation.variables === expense.id}
+                          title="Delete"
+                        >
+                          🗑️
+                        </button>
                       </div>
                     </div>
                   </div>

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
-import { createExpense, updateExpense } from '../api/expenses';
 import { CATEGORY_LIST } from '../utils/categories';
 import { todayStr } from '../utils/format';
 import { btnCls, INPUT, LABEL } from '../utils/cn';
+import { useCreateExpense, useUpdateExpense } from '../hooks/useExpenses';
 import type { Expense, ExpenseInput } from '../types';
 
 interface ExpenseFormProps {
@@ -19,8 +19,11 @@ export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) 
   const [useCustom, setUseCustom] = useState(false);
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(todayStr());
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const createMutation = useCreateExpense();
+  const updateMutation = useUpdateExpense();
+  const loading = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
     if (!expense) return;
@@ -37,7 +40,7 @@ export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) 
     setDate(expense.expense_date);
   }, [expense]);
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError('');
     const parsedAmount = parseFloat(amount);
@@ -56,17 +59,16 @@ export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) 
       description: description.trim() || undefined,
       expense_date: date,
     };
-    setLoading(true);
-    try {
-      if (expense) {
-        await updateExpense(expense.id, input);
-      } else {
-        await createExpense(input);
-      }
-      onSuccess();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-      setLoading(false);
+
+    const callbacks = {
+      onSuccess,
+      onError: (err: Error) => setError(err.message),
+    };
+
+    if (expense) {
+      updateMutation.mutate({ id: expense.id, input }, callbacks);
+    } else {
+      createMutation.mutate(input, callbacks);
     }
   };
 

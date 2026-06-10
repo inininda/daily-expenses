@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
 import { Modal } from './components/Modal';
@@ -9,14 +10,20 @@ import { ExpensesPage } from './pages/ExpensesPage';
 import type { Page } from './components/Header';
 import type { Expense } from './types';
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: Infinity,
+      retry: 1,
+    },
+  },
+});
+
 function AppContent() {
   const { user, loading, setUser } = useAuth();
   const [page, setPage] = useState<Page>('dashboard');
   const [showForm, setShowForm] = useState(false);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const refresh = () => setRefreshKey((k) => k + 1);
 
   const handleAddExpense = () => {
     setEditExpense(null);
@@ -26,11 +33,6 @@ function AppContent() {
   const handleEditExpense = (expense: Expense) => {
     setEditExpense(expense);
     setShowForm(true);
-  };
-
-  const handleFormSuccess = () => {
-    setShowForm(false);
-    refresh();
   };
 
   if (loading) {
@@ -56,17 +58,11 @@ function AppContent() {
       <main className="flex-1 w-full max-w-[1080px] mx-auto px-4 sm:px-6 pt-7 pb-20">
         {page === 'dashboard' ? (
           <DashboardPage
-            key={`dash-${refreshKey}`}
             onEdit={handleEditExpense}
             onNavigateToExpenses={() => setPage('expenses')}
-            refreshKey={refreshKey}
           />
         ) : (
-          <ExpensesPage
-            key={`exp-${refreshKey}`}
-            onEdit={handleEditExpense}
-            refreshKey={refreshKey}
-          />
+          <ExpensesPage onEdit={handleEditExpense} />
         )}
       </main>
 
@@ -77,7 +73,7 @@ function AppContent() {
         >
           <ExpenseForm
             expense={editExpense}
-            onSuccess={handleFormSuccess}
+            onSuccess={() => setShowForm(false)}
             onCancel={() => setShowForm(false)}
           />
         </Modal>
@@ -88,8 +84,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

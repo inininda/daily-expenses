@@ -1,16 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
-import { getExpenses, deleteExpense } from '../api/expenses';
+import { useState, useEffect } from 'react';
 import { getCategoryColor, getCategoryEmoji, CATEGORY_LIST } from '../utils/categories';
 import { formatAmount, formatDate } from '../utils/format';
 import { btnCls, cn } from '../utils/cn';
+import { useInfiniteExpenses, useDeleteExpense } from '../hooks/useExpenses';
 import type { Expense } from '../types';
 
 interface ExpensesPageProps {
   onEdit: (expense: Expense) => void;
-  refreshKey: number;
 }
-
-const PAGE_SIZE = 20;
 
 const FILTER_INPUT =
   'px-[11px] py-2 border border-border rounded-lg bg-surface text-tx-heading text-[13px] outline-none transition-[border-color] duration-150 focus:border-accent font-[inherit]';
@@ -21,61 +18,60 @@ const Spinner = () => (
   </div>
 );
 
-export function ExpensesPage({ onEdit, refreshKey }: ExpensesPageProps) {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [total, setTotal] = useState(0);
-  const [offset, setOffset] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+export function ExpensesPage({ onEdit }: ExpensesPageProps) {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterFrom, setFilterFrom] = useState('');
   const [filterTo, setFilterTo] = useState('');
-
-  const loadExpenses = useCallback((off: number) => {
-    setLoading(true);
-    setError('');
-    getExpenses({
-      category: filterCategory || undefined,
-      date_from: filterFrom || undefined,
-      date_to: filterTo || undefined,
-      limit: PAGE_SIZE,
-      offset: off,
-    })
-      .then((res) => { setExpenses(res.expenses); setTotal(res.total); })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [filterCategory, filterFrom, filterTo]);
+  const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
-    setOffset(0);
-    loadExpenses(0);
-  }, [loadExpenses, refreshKey]);
+    setCurrentPage(0);
+  }, [filterCategory, filterFrom, filterTo]);
 
-  const handlePage = (newOffset: number) => {
-    setOffset(newOffset);
-    loadExpenses(newOffset);
+  const filters = {
+    category: filterCategory || undefined,
+    date_from: filterFrom || undefined,
+    date_to: filterTo || undefined,
+  };
+
+  const { data, isLoading, isFetching, fetchNextPage, hasNextPage, error } =
+    useInfiniteExpenses(filters);
+
+  const deleteMutation = useDeleteExpense();
+
+  const pageLimit = data?.pages[0]?.limit ?? 20;
+  const expenses = data?.pages[currentPage]?.expenses ?? [];
+  const total = data?.pages[0]?.total ?? 0;
+  const totalPages = Math.ceil(total / pageLimit);
+  const showingFrom = total === 0 ? 0 : currentPage * pageLimit + 1;
+  const showingTo = Math.min((currentPage + 1) * pageLimit, total);
+  const hasFilters = filterCategory || filterFrom || filterTo;
+
+  // True while fetching a page we haven't loaded yet
+  const isLoadingPage = isLoading || (data?.pages[currentPage] === undefined && isFetching);
+
+  const handleNext = () => {
+    if (currentPage >= (data?.pages.length ?? 0) - 1 && hasNextPage) {
+      fetchNextPage();
+    }
+    setCurrentPage((p) => p + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this expense?')) return;
-    setDeletingId(id);
-    try {
-      await deleteExpense(id);
-      loadExpenses(offset);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete');
-    } finally {
-      setDeletingId(null);
-    }
+  const handlePrev = () => {
+    setCurrentPage((p) => p - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const hasFilters = filterCategory || filterFrom || filterTo;
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-  const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
-  const showingFrom = total === 0 ? 0 : offset + 1;
-  const showingTo = Math.min(offset + PAGE_SIZE, total);
+  const handleDelete = (id: string) => {
+    if (!confirm('Delete this expense?')) return;
+    deleteMutation.mutate(id);
+  };
+
+  const errorMsg =
+    (error as Error)?.message ||
+    (deleteMutation.error as Error)?.message ||
+    '';
 
   return (
     <div>
@@ -116,14 +112,14 @@ export function ExpensesPage({ onEdit, refreshKey }: ExpensesPageProps) {
         )}
       </div>
 
-      {error && (
+      {errorMsg && (
         <div className="px-[15px] py-[11px] bg-danger-bg border border-danger/20 rounded-lg text-danger text-[13px] mb-4">
-          {error}
+          {errorMsg}
         </div>
       )}
 
       <div className="bg-surface border border-border rounded-xl">
-        {loading ? <Spinner /> : expenses.length === 0 ? (
+        {isLoadingPage ? <Spinner /> : expenses.length === 0 ? (
           <div className="text-center py-12 px-6 text-tx-muted">
             <div className="text-[38px] mb-3">🧾</div>
             <div className="text-[14px] font-semibold text-tx-heading mb-[5px]">No expenses found</div>
@@ -138,11 +134,11 @@ export function ExpensesPage({ onEdit, refreshKey }: ExpensesPageProps) {
                   {getCategoryEmoji(expense.category)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13.5px] font-medium text-tx-heading whitespace-nowrap overflow-hidden text-ellipsis capitalize">
+                  <div className="text-[13.5px] font-medium text-tx-heading capitalize">
                     {expense.description || expense.category}
                   </div>
                   <div className="flex items-center gap-[5px] mt-0.5 text-[12px] text-tx-muted">
-                    <span>{formatDate(expense.expense_date)}</span>
+                    <span className="whitespace-nowrap">{formatDate(expense.expense_date)}</span>
                     <span className="opacity-40">·</span>
                     <span className="inline-flex items-center px-[7px] py-0.5 rounded-full text-[11px] font-semibold capitalize"
                       style={{ background: `${getCategoryColor(expense.category)}18`, color: getCategoryColor(expense.category) }}>
@@ -153,21 +149,27 @@ export function ExpensesPage({ onEdit, refreshKey }: ExpensesPageProps) {
                 <div className="text-[14px] font-semibold text-tx-heading whitespace-nowrap">{formatAmount(expense.amount)}</div>
                 <div className="flex gap-0.5 opacity-100 lg:opacity-0 transition-opacity lg:group-hover:opacity-100">
                   <button className={btnCls('ghost', 'icon')} onClick={() => onEdit(expense)} title="Edit">✏️</button>
-                  <button className={btnCls('ghost', 'icon')} onClick={() => handleDelete(expense.id)}
-                    disabled={deletingId === expense.id} title="Delete">🗑️</button>
+                  <button
+                    className={btnCls('ghost', 'icon')}
+                    onClick={() => handleDelete(expense.id)}
+                    disabled={deleteMutation.isPending && deleteMutation.variables === expense.id}
+                    title="Delete"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {!loading && total > PAGE_SIZE && (
+        {!isLoadingPage && total > pageLimit && (
           <div className="flex items-center justify-between px-5 py-[14px] border-t border-border-light">
             <span className="text-[13px] text-tx-muted">Showing {showingFrom}–{showingTo} of {total}</span>
             <div className="flex items-center gap-2">
-              <button className={btnCls('secondary', 'sm')} onClick={() => handlePage(offset - PAGE_SIZE)} disabled={offset === 0}>← Prev</button>
-              <span className="text-[13px] text-tx-muted">{currentPage} / {totalPages}</span>
-              <button className={btnCls('secondary', 'sm')} onClick={() => handlePage(offset + PAGE_SIZE)} disabled={offset + PAGE_SIZE >= total}>Next →</button>
+              <button className={btnCls('secondary', 'sm')} onClick={handlePrev} disabled={currentPage === 0}>← Prev</button>
+              <span className="text-[13px] text-tx-muted">{currentPage + 1} / {totalPages}</span>
+              <button className={btnCls('secondary', 'sm')} onClick={handleNext} disabled={currentPage + 1 >= totalPages}>Next →</button>
             </div>
           </div>
         )}

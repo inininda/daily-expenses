@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { cn, btnCls } from '../utils/cn';
 import { useAuth } from '../contexts/AuthContext';
+import { useLogout } from '../hooks/useExpenses';
 
 export type Page = 'dashboard' | 'expenses';
 
@@ -11,7 +12,8 @@ interface HeaderProps {
 }
 
 export function Header({ page, onNavigate, onAddExpense }: HeaderProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const logout = useLogout();
   const initial = (user?.email?.[0] ?? 'U').toUpperCase();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
