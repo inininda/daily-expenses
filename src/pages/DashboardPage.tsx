@@ -110,7 +110,7 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-[14px] mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-[14px] mb-5">
         {stats.map((s) => (
           <div key={s.label} className="bg-surface border border-border rounded-xl p-5">
             <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-tx-muted mb-2">{s.label}</div>

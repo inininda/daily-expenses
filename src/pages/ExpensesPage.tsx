@@ -87,7 +87,7 @@ export function ExpensesPage({ onEdit, refreshKey }: ExpensesPageProps) {
       </div>
 
       {/* Filters */}
-      <div className="flex items-end gap-3 mb-5 flex-wrap">
+      <div className="flex items-end gap-2 sm:gap-3 mb-5 flex-wrap">
         {[
           { label: 'Category', content: (
             <select className={cn(FILTER_INPUT, 'pr-2')} value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>

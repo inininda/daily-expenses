@@ -46,7 +46,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-svh flex flex-col bg-bg">
+    <div className="min-h-svh flex flex-col bg-bg overflow-x-hidden">
       <Header
         page={page}
         onNavigate={setPage}

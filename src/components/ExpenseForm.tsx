@@ -87,7 +87,7 @@ export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) 
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-[14px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
         <div className="flex flex-col gap-1.5">
           <label className={LABEL} htmlFor="ef-category">Category</label>
           <select
