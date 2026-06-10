@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { login, signup } from '../api/auth';
+import { btnCls, cn, INPUT, LABEL } from '../utils/cn';
 import type { User } from '../types';
 
 interface AuthPageProps {
@@ -17,10 +18,7 @@ export function AuthPage({ onSuccess }: AuthPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const switchMode = (m: Mode) => {
-    setMode(m);
-    setError('');
-  };
+  const switchMode = (m: Mode) => { setMode(m); setError(''); };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -39,81 +37,65 @@ export function AuthPage({ onSuccess }: AuthPageProps) {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-logo">
-          <div className="auth-logo-icon">💰</div>
-          <span className="auth-logo-text">Daily Expenses</span>
+    <div className="min-h-svh flex items-center justify-center p-4 bg-bg">
+      <div className="bg-surface border border-border rounded-2xl p-8 w-full max-w-[400px] shadow-[0_4px_12px_rgba(0,0,0,0.08),0_2px_4px_rgba(0,0,0,0.05)]">
+
+        <div className="flex items-center justify-center gap-2.5 mb-6">
+          <div className="w-[42px] h-[42px] bg-accent rounded-xl flex items-center justify-center text-[22px]">
+            💰
+          </div>
+          <span className="text-[20px] font-bold text-tx-heading">Daily Expenses</span>
         </div>
 
-        <div className="auth-tabs">
-          <button
-            className={`auth-tab${mode === 'login' ? ' active' : ''}`}
-            onClick={() => switchMode('login')}
-            type="button"
-          >
-            Sign In
-          </button>
-          <button
-            className={`auth-tab${mode === 'signup' ? ' active' : ''}`}
-            onClick={() => switchMode('signup')}
-            type="button"
-          >
-            Create Account
-          </button>
+        <div className="flex bg-surface-2 rounded-lg p-[3px] mb-5">
+          {(['login', 'signup'] as Mode[]).map((m) => (
+            <button
+              key={m} type="button"
+              className={cn(
+                'flex-1 py-2 rounded border-0 text-[13.5px] font-medium cursor-pointer transition-[background,color] duration-150',
+                mode === m ? 'bg-surface text-tx-heading shadow-sm' : 'bg-transparent text-tx-muted'
+              )}
+              onClick={() => switchMode(m)}
+            >
+              {m === 'login' ? 'Sign In' : 'Create Account'}
+            </button>
+          ))}
         </div>
 
-        {error && <div className="auth-error">{error}</div>}
+        {error && (
+          <div className="px-3.5 py-2.5 bg-danger-bg border border-danger/20 rounded-lg text-danger text-[13px] mb-4">
+            {error}
+          </div>
+        )}
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="flex flex-col gap-[14px]" onSubmit={handleSubmit}>
           {mode === 'signup' && (
-            <div className="form-group">
-              <label className="form-label" htmlFor="auth-name">
-                Name <span className="form-optional">(optional)</span>
+            <div className="flex flex-col gap-1.5">
+              <label className={LABEL} htmlFor="auth-name">
+                Name <span className="font-normal text-tx-muted text-[12px]">(optional)</span>
               </label>
-              <input
-                id="auth-name"
-                className="form-input"
-                type="text"
-                placeholder="Jane Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoComplete="name"
-              />
+              <input id="auth-name" className={INPUT} type="text" placeholder="Jane Doe"
+                value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
             </div>
           )}
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="auth-email">Email</label>
-            <input
-              id="auth-email"
-              className="form-input"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoFocus
-              autoComplete="email"
-            />
+          <div className="flex flex-col gap-1.5">
+            <label className={LABEL} htmlFor="auth-email">Email</label>
+            <input id="auth-email" className={INPUT} type="email" placeholder="you@example.com"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+              required autoFocus autoComplete="email" />
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="auth-password">Password</label>
-            <input
-              id="auth-password"
-              className="form-input"
-              type="password"
+          <div className="flex flex-col gap-1.5">
+            <label className={LABEL} htmlFor="auth-password">Password</label>
+            <input id="auth-password" className={INPUT} type="password"
               placeholder={mode === 'signup' ? 'At least 8 characters' : '••••••••'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={mode === 'signup' ? 8 : undefined}
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            />
+              value={password} onChange={(e) => setPassword(e.target.value)}
+              required minLength={mode === 'signup' ? 8 : undefined}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={loading}>
+          <button type="submit" className={btnCls('primary', 'default', 'w-full justify-center mt-1')} disabled={loading}>
             {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
