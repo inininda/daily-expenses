@@ -3,7 +3,7 @@ import type { User, Session } from '../types';
 
 interface AuthData {
   user: User;
-  session: Session;
+  session: Session | null;
 }
 
 export async function signup(email: string, password: string, name?: string): Promise<AuthData> {
@@ -12,7 +12,9 @@ export async function signup(email: string, password: string, name?: string): Pr
     body: { email, password, ...(name ? { name } : {}) },
     auth: false,
   });
-  setTokens(data.session.access_token, data.session.refresh_token);
+  if (data.session) {
+    setTokens(data.session.access_token, data.session.refresh_token);
+  }
   return data;
 }
 
@@ -22,7 +24,7 @@ export async function login(email: string, password: string): Promise<AuthData> 
     body: { email, password },
     auth: false,
   });
-  setTokens(data.session.access_token, data.session.refresh_token);
+  setTokens(data.session!.access_token, data.session!.refresh_token);
   return data;
 }
 
@@ -46,6 +48,6 @@ export async function refreshToken(): Promise<AuthData> {
     body: { refresh_token },
     auth: false,
   });
-  setTokens(data.session.access_token, data.session.refresh_token);
+  setTokens(data.session!.access_token, data.session!.refresh_token);
   return data;
 }
