@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { login, signup } from '../api/auth';
 import { btnCls, cn, INPUT, LABEL } from '../utils/cn';
+import { useTheme } from '../contexts/ThemeContext';
 import type { User } from '../types';
 
 interface AuthPageProps {
@@ -18,6 +19,7 @@ export function AuthPage({ onSuccess }: AuthPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const { theme, toggle: toggleTheme } = useTheme();
   const switchMode = (m: Mode) => { setMode(m); setError(''); };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -37,7 +39,15 @@ export function AuthPage({ onSuccess }: AuthPageProps) {
   };
 
   return (
-    <div className="min-h-svh flex items-center justify-center p-4 bg-bg">
+    <div className="min-h-svh flex items-center justify-center p-4 bg-bg relative">
+      <button
+        className="fixed top-4 right-4 w-[34px] h-[34px] flex items-center justify-center rounded-lg text-tx-muted hover:bg-surface-2 hover:text-tx-heading transition-colors border border-border bg-surface cursor-pointer text-[16px]"
+        onClick={toggleTheme}
+        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        aria-label="Toggle theme"
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
       <div className="bg-surface border border-border rounded-2xl p-8 w-full max-w-[400px] shadow-[0_4px_12px_rgba(0,0,0,0.08),0_2px_4px_rgba(0,0,0,0.05)]">
 
         <div className="flex items-center justify-center gap-2.5 mb-6">

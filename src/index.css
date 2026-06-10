@@ -19,19 +19,30 @@
   --animate-spinner:       spin 0.65s linear infinite;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-accent:       #c084fc;
-    --color-bg:           #0e0f16;
-    --color-surface:      #181922;
-    --color-surface-2:    #1f2030;
-    --color-border:       #2b2c3e;
-    --color-border-light: #232435;
-    --color-tx:           #a8a3be;
-    --color-tx-muted:     #5e5a72;
-    --color-tx-heading:   #eceaf4;
-    --color-danger-bg:    #1f0f0f;
-  }
+html.dark {
+  --color-accent:       #c084fc;
+  --color-bg:           #0e0f16;
+  --color-surface:      #181922;
+  --color-surface-2:    #1f2030;
+  --color-border:       #2b2c3e;
+  --color-border-light: #232435;
+  --color-tx:           #a8a3be;
+  --color-tx-muted:     #5e5a72;
+  --color-tx-heading:   #eceaf4;
+  --color-danger-bg:    #1f0f0f;
+}
+
+html.light {
+  --color-accent:        #aa3bff;
+  --color-bg:            #f6f5fb;
+  --color-surface:       #ffffff;
+  --color-surface-2:     #f0eff7;
+  --color-border:        #e4e2ef;
+  --color-border-light:  #ece9f5;
+  --color-tx:            #5c566e;
+  --color-tx-muted:      #9b93b0;
+  --color-tx-heading:    #1a1626;
+  --color-danger-bg:     #fef2f2;
 }
 
 @layer base {

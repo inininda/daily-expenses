@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { cn, btnCls } from '../utils/cn';
 import { useAuth } from '../contexts/AuthContext';
 import { useLogout } from '../hooks/useExpenses';
+import { useTheme } from '../contexts/ThemeContext';
 
 export type Page = 'dashboard' | 'expenses';
 
@@ -14,6 +15,7 @@ interface HeaderProps {
 export function Header({ page, onNavigate, onAddExpense }: HeaderProps) {
   const { user } = useAuth();
   const logout = useLogout();
+  const { theme, toggle: toggleTheme } = useTheme();
   const initial = (user?.email?.[0] ?? 'U').toUpperCase();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -65,6 +67,16 @@ export function Header({ page, onNavigate, onAddExpense }: HeaderProps) {
         <div className="flex items-center gap-2 ml-auto">
           <button className={btnCls('primary', 'sm')} onClick={onAddExpense}>
             + Add
+          </button>
+
+          {/* Theme toggle */}
+          <button
+            className="w-[30px] h-[30px] flex items-center justify-center rounded-lg text-tx-muted hover:bg-surface-2 hover:text-tx-heading transition-colors border-0 cursor-pointer text-[16px] shrink-0"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
           </button>
 
           {/* Avatar — click to open dropdown with email + sign out */}
