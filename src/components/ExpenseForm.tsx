@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { createExpense, updateExpense } from '../api/expenses';
 import { CATEGORY_LIST } from '../utils/categories';
 import { todayStr } from '../utils/format';
+import { btnCls, INPUT, LABEL } from '../utils/cn';
 import type { Expense, ExpenseInput } from '../types';
 
 interface ExpenseFormProps {
@@ -39,26 +40,22 @@ export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       setError('Amount must be a positive number');
       return;
     }
-
     const finalCategory = useCustom ? customCategory.trim() : category;
     if (!finalCategory) {
       setError('Category is required');
       return;
     }
-
     const input: ExpenseInput = {
       amount: parsedAmount,
       category: finalCategory,
       description: description.trim() || undefined,
       expense_date: date,
     };
-
     setLoading(true);
     try {
       if (expense) {
@@ -74,97 +71,74 @@ export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="expense-form">
-      {error && <div className="error-message">{error}</div>}
+    <form onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
+      {error && (
+        <div className="px-[15px] py-[11px] bg-danger-bg border border-danger/20 rounded-lg text-danger text-[13px]">
+          {error}
+        </div>
+      )}
 
-      <div className="form-group">
-        <label className="form-label" htmlFor="ef-amount">Amount</label>
+      <div className="flex flex-col gap-1.5">
+        <label className={LABEL} htmlFor="ef-amount">Amount</label>
         <input
-          id="ef-amount"
-          className="form-input"
-          type="number"
-          step="0.01"
-          min="0.01"
-          placeholder="0.00"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          required
-          autoFocus
+          id="ef-amount" className={INPUT} type="number" step="0.01" min="0.01"
+          placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)}
+          required autoFocus
         />
       </div>
 
-      <div className="form-row">
-        <div className="form-group">
-          <label className="form-label" htmlFor="ef-category">Category</label>
+      <div className="grid grid-cols-2 gap-[14px]">
+        <div className="flex flex-col gap-1.5">
+          <label className={LABEL} htmlFor="ef-category">Category</label>
           <select
-            id="ef-category"
-            className="form-input"
+            id="ef-category" className={INPUT}
             value={useCustom ? '_custom' : category}
             onChange={(e) => {
-              if (e.target.value === '_custom') {
-                setUseCustom(true);
-              } else {
-                setUseCustom(false);
-                setCategory(e.target.value);
-              }
+              if (e.target.value === '_custom') { setUseCustom(true); }
+              else { setUseCustom(false); setCategory(e.target.value); }
             }}
           >
             {CATEGORY_LIST.map((c) => (
-              <option key={c} value={c}>
-                {c.charAt(0).toUpperCase() + c.slice(1)}
-              </option>
+              <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
             ))}
             <option value="_custom">Custom...</option>
           </select>
         </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="ef-date">Date</label>
+        <div className="flex flex-col gap-1.5">
+          <label className={LABEL} htmlFor="ef-date">Date</label>
           <input
-            id="ef-date"
-            className="form-input"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
+            id="ef-date" className={INPUT} type="date" value={date}
+            onChange={(e) => setDate(e.target.value)} required
           />
         </div>
       </div>
 
       {useCustom && (
-        <div className="form-group">
-          <label className="form-label" htmlFor="ef-custom">Custom Category</label>
+        <div className="flex flex-col gap-1.5">
+          <label className={LABEL} htmlFor="ef-custom">Custom Category</label>
           <input
-            id="ef-custom"
-            className="form-input"
-            type="text"
+            id="ef-custom" className={INPUT} type="text"
             placeholder="e.g. gym, coffee, gifts..."
-            value={customCategory}
-            onChange={(e) => setCustomCategory(e.target.value)}
-            required
+            value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} required
           />
         </div>
       )}
 
-      <div className="form-group">
-        <label className="form-label" htmlFor="ef-desc">
-          Description <span className="form-optional">(optional)</span>
+      <div className="flex flex-col gap-1.5">
+        <label className={LABEL} htmlFor="ef-desc">
+          Description{' '}
+          <span className="font-normal text-tx-muted text-[12px]">(optional)</span>
         </label>
         <input
-          id="ef-desc"
-          className="form-input"
-          type="text"
+          id="ef-desc" className={INPUT} type="text"
           placeholder="What was this for?"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          value={description} onChange={(e) => setDescription(e.target.value)}
         />
       </div>
 
-      <div className="form-actions">
-        <button type="button" className="btn btn-secondary" onClick={onCancel}>
-          Cancel
-        </button>
-        <button type="submit" className="btn btn-primary" disabled={loading}>
+      <div className="flex gap-2 justify-end pt-2">
+        <button type="button" className={btnCls('secondary')} onClick={onCancel}>Cancel</button>
+        <button type="submit" className={btnCls('primary')} disabled={loading}>
           {loading ? 'Saving...' : expense ? 'Update Expense' : 'Add Expense'}
         </button>
       </div>
