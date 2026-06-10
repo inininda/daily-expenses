@@ -81,7 +81,7 @@ export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) 
       <div className="flex flex-col gap-1.5">
         <label className={LABEL} htmlFor="ef-amount">Amount</label>
         <input
-          id="ef-amount" className={INPUT} type="number" step="0.01" min="0.01"
+          id="ef-amount" className={`${INPUT} no-spinners`} type="number" step="0.01" min="0.01"
           placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)}
           required autoFocus
         />
