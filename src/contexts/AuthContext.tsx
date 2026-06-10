@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { getMe, logout as apiLogout } from '../api/auth';
-import { clearTokens, getToken } from '../api/client';
+import { clearTokens, getToken, setTokens } from '../api/client';
 import type { User } from '../types';
 
 interface AuthContextValue {
@@ -18,6 +18,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes('access_token=')) {
+      const params = new URLSearchParams(hash.slice(1));
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      if (accessToken && refreshToken) {
+        setTokens(accessToken, refreshToken);
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        getMe()
+          .then(setUser)
+          .catch(() => clearTokens())
+          .finally(() => setLoading(false));
+        return;
+      }
+    }
+
     if (!getToken()) {
       setLoading(false);
       return;

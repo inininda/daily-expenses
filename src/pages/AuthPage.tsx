@@ -18,19 +18,28 @@ export function AuthPage({ onSuccess }: AuthPageProps) {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
 
   const { theme, toggle: toggleTheme } = useTheme();
-  const switchMode = (m: Mode) => { setMode(m); setError(''); };
+  const switchMode = (m: Mode) => { setMode(m); setError(''); setInfo(''); };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setInfo('');
     setLoading(true);
     try {
-      const data = mode === 'login'
-        ? await login(email, password)
-        : await signup(email, password, name || undefined);
-      onSuccess(data.user);
+      if (mode === 'login') {
+        const data = await login(email, password);
+        onSuccess(data.user);
+      } else {
+        const data = await signup(email, password, name || undefined);
+        if (data.session) {
+          onSuccess(data.user);
+        } else {
+          setInfo('Check your inbox and confirm your email, then sign in here.');
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -75,6 +84,12 @@ export function AuthPage({ onSuccess }: AuthPageProps) {
         {error && (
           <div className="px-3.5 py-2.5 bg-danger-bg border border-danger/20 rounded-lg text-danger text-[13px] mb-4">
             {error}
+          </div>
+        )}
+
+        {info && (
+          <div className="px-3.5 py-2.5 bg-accent/10 border border-accent/25 rounded-lg text-accent text-[13px] mb-4">
+            {info}
           </div>
         )}
 
