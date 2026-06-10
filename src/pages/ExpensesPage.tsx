@@ -79,7 +79,7 @@ export function ExpensesPage({ onEdit, refreshKey }: ExpensesPageProps) {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3">
         <div>
           <h1 className="text-[22px] font-bold text-tx-heading tracking-tight">All Expenses</h1>
           <p className="text-[13px] text-tx-muted mt-0.5">{total} expense{total !== 1 ? 's' : ''} total</p>

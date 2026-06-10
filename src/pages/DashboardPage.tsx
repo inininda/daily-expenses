@@ -82,12 +82,12 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
   return (
     <div>
       {/* Header */}
-      <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3">
         <div>
           <h1 className="text-[22px] font-bold text-tx-heading tracking-tight">Dashboard</h1>
           {summary && <p className="text-[13px] text-tx-muted mt-0.5">{periodLabel}</p>}
         </div>
-        <div className="flex gap-[3px] bg-surface border border-border p-[3px] rounded-lg">
+        <div className="flex shrink-0 gap-[3px] bg-surface border border-border p-[3px] rounded-lg overflow-x-auto self-start">
           {PERIODS.map((p) => (
             <button
               key={p.value}
@@ -110,7 +110,7 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-[14px] mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-[14px] mb-5">
         {stats.map((s) => (
           <div key={s.label} className="bg-surface border border-border rounded-xl p-5">
             <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-tx-muted mb-2">{s.label}</div>

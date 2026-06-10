@@ -46,14 +46,14 @@ function AppContent() {
   }
 
   return (
-    <div className="app">
+    <div className="min-h-svh flex flex-col bg-bg">
       <Header
         page={page}
         onNavigate={setPage}
         onAddExpense={handleAddExpense}
       />
 
-      <main className="app-main">
+      <main className="flex-1 w-full max-w-[1080px] mx-auto px-4 sm:px-6 pt-7 pb-20">
         {page === 'dashboard' ? (
           <DashboardPage
             key={`dash-${refreshKey}`}
