@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { cn, btnCls } from '../utils/cn';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,12 +13,23 @@ interface HeaderProps {
 export function Header({ page, onNavigate, onAddExpense }: HeaderProps) {
   const { user, logout } = useAuth();
   const initial = (user?.email?.[0] ?? 'U').toUpperCase();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
 
   return (
     <header className="sticky top-0 z-[100] bg-surface border-b border-border backdrop-blur-sm">
       <div className="max-w-[1080px] mx-auto px-3 sm:px-6 h-[58px] flex items-center gap-2 sm:gap-3">
 
-        {/* Logo — text only at md+ to save space */}
+        {/* Logo */}
         <div className="flex items-center gap-2 font-bold text-[15px] text-tx-heading whitespace-nowrap shrink-0">
           <div className="w-[30px] h-[30px] bg-accent rounded-lg flex items-center justify-center text-[15px]">
             💰
@@ -25,7 +37,7 @@ export function Header({ page, onNavigate, onAddExpense }: HeaderProps) {
           <span className="hidden md:inline">Daily Expenses</span>
         </div>
 
-        {/* Nav — short labels below md, full labels at md+ */}
+        {/* Nav */}
         <nav className="flex gap-0.5">
           {(['dashboard', 'expenses'] as Page[]).map((p) => (
             <button
@@ -48,39 +60,35 @@ export function Header({ page, onNavigate, onAddExpense }: HeaderProps) {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
+        <div className="flex items-center gap-2 ml-auto">
           <button className={btnCls('primary', 'sm')} onClick={onAddExpense}>
             + Add
           </button>
 
-          <div className="flex items-center gap-1.5">
-            {/* Email only at lg+ to keep things roomy */}
-            <span className="hidden lg:block text-[13px] text-tx-muted max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap">
-              {user?.email}
-            </span>
+          {/* Avatar — click to open dropdown with email + sign out */}
+          <div className="relative" ref={menuRef}>
             <div
-              className="w-[30px] h-[30px] rounded-full bg-accent text-white flex items-center justify-center text-[12px] font-bold shrink-0 cursor-pointer"
+              className="w-[30px] h-[30px] rounded-full bg-accent text-white flex items-center justify-center text-[12px] font-bold shrink-0 cursor-pointer select-none"
+              onClick={() => setMenuOpen((o) => !o)}
               title={user?.email}
             >
               {initial}
             </div>
-          </div>
 
-          {/* Sign out: text at md+, compact icon below md */}
-          <button
-            className={cn(btnCls('ghost', 'sm'), 'hidden md:inline-flex')}
-            onClick={logout}
-          >
-            Sign out
-          </button>
-          <button
-            className="md:hidden flex items-center justify-center w-[30px] h-[30px] rounded-lg text-tx-muted hover:bg-surface-2 transition-colors text-[16px]"
-            onClick={logout}
-            title="Sign out"
-            aria-label="Sign out"
-          >
-            ↩
-          </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-[calc(100%+6px)] bg-surface border border-border rounded-xl shadow-lg overflow-hidden min-w-[190px] z-50">
+                <div className="px-3 py-[10px] text-[12px] text-tx-muted border-b border-border truncate">
+                  {user?.email}
+                </div>
+                <button
+                  className="w-full px-3 py-[10px] text-left text-[13px] text-tx-heading hover:bg-surface-2 transition-colors cursor-pointer border-0 bg-transparent"
+                  onClick={() => { setMenuOpen(false); logout(); }}
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
       </div>
