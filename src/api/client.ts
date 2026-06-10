@@ -1,4 +1,4 @@
-const BASE_URL = 'http://127.0.0.1:54321/functions/v1/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
 
 export function getToken(): string | null {
   return localStorage.getItem('access_token');
