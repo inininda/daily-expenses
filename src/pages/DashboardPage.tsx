@@ -82,24 +82,29 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3">
-        <div>
-          <h1 className="text-[22px] font-bold text-tx-heading tracking-tight">Dashboard</h1>
-          {summary && <p className="text-[13px] text-tx-muted mt-0.5">{periodLabel}</p>}
+      <div className="mb-5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <h1 className="text-[22px] font-bold text-tx-heading tracking-tight">Dashboard</h1>
+            {summary && <p className="text-[13px] text-tx-muted mt-0.5">{periodLabel}</p>}
+          </div>
         </div>
-        <div className="flex shrink-0 gap-[3px] bg-surface border border-border p-[3px] rounded-lg overflow-x-auto self-start">
-          {PERIODS.map((p) => (
-            <button
-              key={p.value}
-              className={cn(
-                'px-[13px] py-[5px] border-0 rounded text-[12.5px] font-medium cursor-pointer transition-colors whitespace-nowrap',
-                period === p.value ? 'bg-accent/10 text-accent' : 'bg-transparent text-tx-muted hover:text-tx-heading'
-              )}
-              onClick={() => setPeriod(p.value)}
-            >
-              {p.label}
-            </button>
-          ))}
+        {/* Period tabs in their own scrollable row — never overflows viewport */}
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex gap-[3px] bg-surface border border-border p-[3px] rounded-lg w-max min-w-full sm:min-w-0 sm:w-auto">
+            {PERIODS.map((p) => (
+              <button
+                key={p.value}
+                className={cn(
+                  'flex-1 sm:flex-none px-[13px] py-[5px] border-0 rounded text-[12.5px] font-medium cursor-pointer transition-colors whitespace-nowrap',
+                  period === p.value ? 'bg-accent/10 text-accent' : 'bg-transparent text-tx-muted hover:text-tx-heading'
+                )}
+                onClick={() => setPeriod(p.value)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
