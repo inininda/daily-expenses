@@ -35,8 +35,8 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100svh' }}>
-        <div className="spinner" />
+      <div className="flex items-center justify-center min-h-svh">
+        <div className="w-[22px] h-[22px] border-[2.5px] border-border border-t-accent rounded-full animate-spinner" />
       </div>
     );
   }
