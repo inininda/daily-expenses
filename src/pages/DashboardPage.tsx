@@ -91,12 +91,12 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
         </div>
         {/* Period tabs in their own scrollable row — never overflows viewport */}
         <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex gap-[3px] bg-surface border border-border p-[3px] rounded-lg w-max min-w-full sm:min-w-0 sm:w-auto">
+          <div className="inline-flex gap-[3px] bg-surface border border-border p-[3px] rounded-lg">
             {PERIODS.map((p) => (
               <button
                 key={p.value}
                 className={cn(
-                  'flex-1 sm:flex-none px-[13px] py-[5px] border-0 rounded text-[12.5px] font-medium cursor-pointer transition-colors whitespace-nowrap',
+                  'px-[13px] py-[5px] border-0 rounded text-[12.5px] font-medium cursor-pointer transition-colors whitespace-nowrap',
                   period === p.value ? 'bg-accent/10 text-accent' : 'bg-transparent text-tx-muted hover:text-tx-heading'
                 )}
                 onClick={() => setPeriod(p.value)}
