@@ -24,3 +24,9 @@ dist-ssr
 *.sw?
 
 .claude
+.env
+.env.local
+
+# Local Netlify folder
+.netlify
+netlify.toml
