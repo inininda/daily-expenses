@@ -3,6 +3,7 @@ import { getCategoryColor, getCategoryEmoji, CATEGORY_LIST } from '../utils/cate
 import { formatAmount, formatDate } from '../utils/format';
 import { btnCls, cn } from '../utils/cn';
 import { useInfiniteExpenses, useDeleteExpense } from '../hooks/useExpenses';
+import { ConfirmModal } from '../components/ConfirmModal';
 import type { Expense } from '../types';
 
 interface ExpensesPageProps {
@@ -38,6 +39,7 @@ export function ExpensesPage({ onEdit }: ExpensesPageProps) {
     useInfiniteExpenses(filters);
 
   const deleteMutation = useDeleteExpense();
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const pageLimit = data?.pages[0]?.limit ?? 20;
   const expenses = data?.pages[currentPage]?.expenses ?? [];
@@ -63,10 +65,7 @@ export function ExpensesPage({ onEdit }: ExpensesPageProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm('Delete this expense?')) return;
-    deleteMutation.mutate(id);
-  };
+  const handleDelete = (id: string) => setConfirmId(id);
 
   const errorMsg =
     (error as Error)?.message ||
@@ -174,6 +173,15 @@ export function ExpensesPage({ onEdit }: ExpensesPageProps) {
           </div>
         )}
       </div>
+
+      {confirmId && (
+        <ConfirmModal
+          title="Delete expense?"
+          description="This action cannot be undone."
+          onConfirm={() => { deleteMutation.mutate(confirmId); setConfirmId(null); }}
+          onCancel={() => setConfirmId(null)}
+        />
+      )}
     </div>
   );
 }

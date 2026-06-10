@@ -3,6 +3,7 @@ import { getCategoryColor, getCategoryEmoji } from '../utils/categories';
 import { formatAmount, formatDate, formatMonthYear } from '../utils/format';
 import { btnCls, cn } from '../utils/cn';
 import { useSummary, useRecentExpenses, useDeleteExpense } from '../hooks/useExpenses';
+import { ConfirmModal } from '../components/ConfirmModal';
 import type { Expense } from '../types';
 
 interface DashboardPageProps {
@@ -29,17 +30,13 @@ export function DashboardPage({ onEdit, onNavigateToExpenses }: DashboardPagePro
   const { data: summary, isLoading: summaryLoading, error: summaryError } = useSummary(period);
   const { data: recent = [], isLoading: recentLoading, error: recentError } = useRecentExpenses();
   const deleteMutation = useDeleteExpense();
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const error =
     (summaryError as Error)?.message ||
     (recentError as Error)?.message ||
     (deleteMutation.error as Error)?.message ||
     '';
-
-  const handleDelete = (id: string) => {
-    if (!confirm('Delete this expense?')) return;
-    deleteMutation.mutate(id);
-  };
 
   const categories = summary
     ? Object.entries(summary.by_category).sort((a, b) => b[1].total - a[1].total)
@@ -186,7 +183,7 @@ export function DashboardPage({ onEdit, onNavigateToExpenses }: DashboardPagePro
                         <button className={btnCls('ghost', 'icon')} onClick={() => onEdit(expense)} title="Edit">✏️</button>
                         <button
                           className={btnCls('ghost', 'icon')}
-                          onClick={() => handleDelete(expense.id)}
+                          onClick={() => setConfirmId(expense.id)}
                           disabled={deleteMutation.isPending && deleteMutation.variables === expense.id}
                           title="Delete"
                         >
@@ -201,6 +198,14 @@ export function DashboardPage({ onEdit, onNavigateToExpenses }: DashboardPagePro
           )}
         </div>
       </div>
+      {confirmId && (
+        <ConfirmModal
+          title="Delete expense?"
+          description="This action cannot be undone."
+          onConfirm={() => { deleteMutation.mutate(confirmId); setConfirmId(null); }}
+          onCancel={() => setConfirmId(null)}
+        />
+      )}
     </div>
   );
 }
