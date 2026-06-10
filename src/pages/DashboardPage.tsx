@@ -117,13 +117,13 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-[14px] mb-5">
         {stats.map((s) => (
-          <div key={s.label} className="bg-surface border border-border rounded-xl p-5">
+          <div key={s.label} className="bg-surface border border-border rounded-xl p-5 overflow-hidden min-w-0">
             <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-tx-muted mb-2">{s.label}</div>
             {summaryLoading ? (
               <div className="h-8 bg-surface-2 rounded-lg w-3/5 animate-pulse-fade" />
             ) : (
               <>
-                <div className="text-[26px] font-bold text-tx-heading tracking-tight leading-[1.1]">{s.value}</div>
+                <div className="text-[20px] sm:text-[26px] font-bold text-tx-heading tracking-tight leading-[1.2] break-all">{s.value}</div>
                 <div className="text-[12px] text-tx-muted mt-[5px]">{s.sub}</div>
               </>
             )}
@@ -184,31 +184,35 @@ export function DashboardPage({ onEdit, onNavigateToExpenses, refreshKey }: Dash
           ) : (
             <div className="flex flex-col">
               {recent.map((expense) => (
-                <div key={expense.id} className="flex items-center gap-3 py-[11px] border-b border-border-light last:border-b-0 group">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[16px] shrink-0"
+                <div key={expense.id} className="flex items-start gap-3 py-[11px] border-b border-border-light last:border-b-0">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[16px] shrink-0 mt-0.5"
                     style={{ background: `${getCategoryColor(expense.category)}18` }}>
                     {getCategoryEmoji(expense.category)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[13.5px] font-medium text-tx-heading whitespace-nowrap overflow-hidden text-ellipsis capitalize">
-                      {expense.description || expense.category}
+                    {/* description + amount on same row */}
+                    <div className="flex items-start gap-2">
+                      <span className="flex-1 text-[13.5px] font-medium text-tx-heading capitalize">
+                        {expense.description || expense.category}
+                      </span>
+                      <span className="text-[13.5px] font-semibold text-tx-heading whitespace-nowrap shrink-0">
+                        {formatAmount(expense.amount)}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-[5px] mt-0.5 text-[12px] text-tx-muted">
-                      <span>{formatDate(expense.expense_date)}</span>
+                    {/* date · category · actions */}
+                    <div className="flex items-center gap-[5px] mt-1 text-[12px] text-tx-muted flex-wrap">
+                      <span className="whitespace-nowrap">{formatDate(expense.expense_date)}</span>
                       <span className="opacity-40">·</span>
                       <span className="inline-flex items-center px-[7px] py-0.5 rounded-full text-[11px] font-semibold capitalize"
                         style={{ background: `${getCategoryColor(expense.category)}18`, color: getCategoryColor(expense.category) }}>
                         {expense.category}
                       </span>
+                      <div className="flex gap-0.5 ml-auto -my-1">
+                        <button className={btnCls('ghost', 'icon')} onClick={() => onEdit(expense)} title="Edit">✏️</button>
+                        <button className={btnCls('ghost', 'icon')} onClick={() => handleDelete(expense.id)}
+                          disabled={deletingId === expense.id} title="Delete">🗑️</button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-[14px] font-semibold text-tx-heading whitespace-nowrap">
-                    {formatAmount(expense.amount)}
-                  </div>
-                  <div className="flex gap-0.5 opacity-100 lg:opacity-0 transition-opacity lg:group-hover:opacity-100">
-                    <button className={btnCls('ghost', 'icon')} onClick={() => onEdit(expense)} title="Edit">✏️</button>
-                    <button className={btnCls('ghost', 'icon')} onClick={() => handleDelete(expense.id)}
-                      disabled={deletingId === expense.id} title="Delete">🗑️</button>
                   </div>
                 </div>
               ))}
