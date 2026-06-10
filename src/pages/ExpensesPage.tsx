@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getExpenses, deleteExpense } from '../api/expenses';
 import { getCategoryColor, getCategoryEmoji, CATEGORY_LIST } from '../utils/categories';
 import { formatAmount, formatDate } from '../utils/format';
+import { btnCls, cn } from '../utils/cn';
 import type { Expense } from '../types';
 
 interface ExpensesPageProps {
@@ -11,6 +12,15 @@ interface ExpensesPageProps {
 
 const PAGE_SIZE = 20;
 
+const FILTER_INPUT =
+  'px-[11px] py-2 border border-border rounded-lg bg-surface text-tx-heading text-[13px] outline-none transition-[border-color] duration-150 focus:border-accent font-[inherit]';
+
+const Spinner = () => (
+  <div className="flex items-center justify-center p-12">
+    <div className="w-[22px] h-[22px] border-[2.5px] border-border border-t-accent rounded-full animate-spinner" />
+  </div>
+);
+
 export function ExpensesPage({ onEdit, refreshKey }: ExpensesPageProps) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [total, setTotal] = useState(0);
@@ -18,40 +28,33 @@ export function ExpensesPage({ onEdit, refreshKey }: ExpensesPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
   const [filterCategory, setFilterCategory] = useState('');
   const [filterFrom, setFilterFrom] = useState('');
   const [filterTo, setFilterTo] = useState('');
 
-  const fetch = useCallback(
-    (off: number) => {
-      setLoading(true);
-      setError('');
-      getExpenses({
-        category: filterCategory || undefined,
-        date_from: filterFrom || undefined,
-        date_to: filterTo || undefined,
-        limit: PAGE_SIZE,
-        offset: off,
-      })
-        .then((res) => {
-          setExpenses(res.expenses);
-          setTotal(res.total);
-        })
-        .catch((e) => setError(e.message))
-        .finally(() => setLoading(false));
-    },
-    [filterCategory, filterFrom, filterTo]
-  );
+  const loadExpenses = useCallback((off: number) => {
+    setLoading(true);
+    setError('');
+    getExpenses({
+      category: filterCategory || undefined,
+      date_from: filterFrom || undefined,
+      date_to: filterTo || undefined,
+      limit: PAGE_SIZE,
+      offset: off,
+    })
+      .then((res) => { setExpenses(res.expenses); setTotal(res.total); })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [filterCategory, filterFrom, filterTo]);
 
   useEffect(() => {
     setOffset(0);
-    fetch(0);
-  }, [fetch, refreshKey]);
+    loadExpenses(0);
+  }, [loadExpenses, refreshKey]);
 
   const handlePage = (newOffset: number) => {
     setOffset(newOffset);
-    fetch(newOffset);
+    loadExpenses(newOffset);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -60,18 +63,12 @@ export function ExpensesPage({ onEdit, refreshKey }: ExpensesPageProps) {
     setDeletingId(id);
     try {
       await deleteExpense(id);
-      fetch(offset);
+      loadExpenses(offset);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete');
     } finally {
       setDeletingId(null);
     }
-  };
-
-  const clearFilters = () => {
-    setFilterCategory('');
-    setFilterFrom('');
-    setFilterTo('');
   };
 
   const hasFilters = filterCategory || filterFrom || filterTo;
@@ -82,118 +79,82 @@ export function ExpensesPage({ onEdit, refreshKey }: ExpensesPageProps) {
 
   return (
     <div>
-      <div className="page-header">
+      <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="page-title">All Expenses</h1>
-          <p className="page-subtitle">{total} expense{total !== 1 ? 's' : ''} total</p>
+          <h1 className="text-[22px] font-bold text-tx-heading tracking-tight">All Expenses</h1>
+          <p className="text-[13px] text-tx-muted mt-0.5">{total} expense{total !== 1 ? 's' : ''} total</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="filters">
-        <div className="filter-item">
-          <label className="filter-label">Category</label>
-          <select
-            className="filter-input"
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-          >
-            <option value="">All categories</option>
-            {CATEGORY_LIST.map((c) => (
-              <option key={c} value={c}>
-                {c.charAt(0).toUpperCase() + c.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filter-item">
-          <label className="filter-label">From</label>
-          <input
-            className="filter-input"
-            type="date"
-            value={filterFrom}
-            onChange={(e) => setFilterFrom(e.target.value)}
-          />
-        </div>
-
-        <div className="filter-item">
-          <label className="filter-label">To</label>
-          <input
-            className="filter-input"
-            type="date"
-            value={filterTo}
-            onChange={(e) => setFilterTo(e.target.value)}
-          />
-        </div>
-
-        {hasFilters && (
-          <div className="filter-item" style={{ alignSelf: 'flex-end' }}>
-            <button className="btn btn-ghost btn-sm" onClick={clearFilters}>
-              Clear filters
-            </button>
+      <div className="flex items-end gap-3 mb-5 flex-wrap">
+        {[
+          { label: 'Category', content: (
+            <select className={cn(FILTER_INPUT, 'pr-2')} value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+              <option value="">All categories</option>
+              {CATEGORY_LIST.map((c) => (
+                <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+              ))}
+            </select>
+          )},
+          { label: 'From', content: (
+            <input className={FILTER_INPUT} type="date" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} />
+          )},
+          { label: 'To', content: (
+            <input className={FILTER_INPUT} type="date" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} />
+          )},
+        ].map(({ label, content }) => (
+          <div key={label} className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-[0.05em] text-tx-muted">{label}</label>
+            {content}
           </div>
+        ))}
+        {hasFilters && (
+          <button className={btnCls('ghost', 'sm')} onClick={() => { setFilterCategory(''); setFilterFrom(''); setFilterTo(''); }}>
+            Clear filters
+          </button>
         )}
       </div>
 
-      {error && <div className="error-message" style={{ marginBottom: 16 }}>{error}</div>}
+      {error && (
+        <div className="px-[15px] py-[11px] bg-danger-bg border border-danger/20 rounded-lg text-danger text-[13px] mb-4">
+          {error}
+        </div>
+      )}
 
-      <div className="card" style={{ padding: 0 }}>
-        {loading ? (
-          <div className="loading"><div className="spinner" /></div>
-        ) : expenses.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">🧾</div>
-            <div className="empty-state-title">No expenses found</div>
-            <div className="empty-state-desc">
-              {hasFilters ? 'Try clearing your filters' : 'Add your first expense to get started'}
-            </div>
+      <div className="bg-surface border border-border rounded-xl">
+        {loading ? <Spinner /> : expenses.length === 0 ? (
+          <div className="text-center py-12 px-6 text-tx-muted">
+            <div className="text-[38px] mb-3">🧾</div>
+            <div className="text-[14px] font-semibold text-tx-heading mb-[5px]">No expenses found</div>
+            <div className="text-[13px]">{hasFilters ? 'Try clearing your filters' : 'Add your first expense to get started'}</div>
           </div>
         ) : (
-          <div className="expense-list expense-list-full">
+          <div className="flex flex-col">
             {expenses.map((expense) => (
-              <div key={expense.id} className="expense-item expense-item-padded">
-                <div
-                  className="expense-icon"
-                  style={{ background: `${getCategoryColor(expense.category)}18` }}
-                >
+              <div key={expense.id} className="flex items-center gap-3 px-5 py-[11px] border-b border-border-light last:border-b-0 group">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[16px] shrink-0"
+                  style={{ background: `${getCategoryColor(expense.category)}18` }}>
                   {getCategoryEmoji(expense.category)}
                 </div>
-                <div className="expense-info">
-                  <div className="expense-desc">
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13.5px] font-medium text-tx-heading whitespace-nowrap overflow-hidden text-ellipsis capitalize">
                     {expense.description || expense.category}
                   </div>
-                  <div className="expense-meta">
+                  <div className="flex items-center gap-[5px] mt-0.5 text-[12px] text-tx-muted">
                     <span>{formatDate(expense.expense_date)}</span>
-                    <span className="meta-dot">·</span>
-                    <span
-                      className="cat-badge"
-                      style={{
-                        background: `${getCategoryColor(expense.category)}18`,
-                        color: getCategoryColor(expense.category),
-                      }}
-                    >
+                    <span className="opacity-40">·</span>
+                    <span className="inline-flex items-center px-[7px] py-0.5 rounded-full text-[11px] font-semibold capitalize"
+                      style={{ background: `${getCategoryColor(expense.category)}18`, color: getCategoryColor(expense.category) }}>
                       {expense.category}
                     </span>
                   </div>
                 </div>
-                <div className="expense-amount">{formatAmount(expense.amount)}</div>
-                <div className="expense-actions">
-                  <button
-                    className="btn btn-ghost btn-icon"
-                    onClick={() => onEdit(expense)}
-                    title="Edit"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-icon"
-                    onClick={() => handleDelete(expense.id)}
-                    disabled={deletingId === expense.id}
-                    title="Delete"
-                  >
-                    🗑️
-                  </button>
+                <div className="text-[14px] font-semibold text-tx-heading whitespace-nowrap">{formatAmount(expense.amount)}</div>
+                <div className="flex gap-0.5 opacity-100 lg:opacity-0 transition-opacity lg:group-hover:opacity-100">
+                  <button className={btnCls('ghost', 'icon')} onClick={() => onEdit(expense)} title="Edit">✏️</button>
+                  <button className={btnCls('ghost', 'icon')} onClick={() => handleDelete(expense.id)}
+                    disabled={deletingId === expense.id} title="Delete">🗑️</button>
                 </div>
               </div>
             ))}
@@ -201,28 +162,12 @@ export function ExpensesPage({ onEdit, refreshKey }: ExpensesPageProps) {
         )}
 
         {!loading && total > PAGE_SIZE && (
-          <div className="pagination">
-            <span className="pagination-info">
-              Showing {showingFrom}–{showingTo} of {total}
-            </span>
-            <div className="pagination-controls">
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => handlePage(offset - PAGE_SIZE)}
-                disabled={offset === 0}
-              >
-                ← Prev
-              </button>
-              <span className="pagination-page">
-                {currentPage} / {totalPages}
-              </span>
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => handlePage(offset + PAGE_SIZE)}
-                disabled={offset + PAGE_SIZE >= total}
-              >
-                Next →
-              </button>
+          <div className="flex items-center justify-between px-5 py-[14px] border-t border-border-light">
+            <span className="text-[13px] text-tx-muted">Showing {showingFrom}–{showingTo} of {total}</span>
+            <div className="flex items-center gap-2">
+              <button className={btnCls('secondary', 'sm')} onClick={() => handlePage(offset - PAGE_SIZE)} disabled={offset === 0}>← Prev</button>
+              <span className="text-[13px] text-tx-muted">{currentPage} / {totalPages}</span>
+              <button className={btnCls('secondary', 'sm')} onClick={() => handlePage(offset + PAGE_SIZE)} disabled={offset + PAGE_SIZE >= total}>Next →</button>
             </div>
           </div>
         )}
